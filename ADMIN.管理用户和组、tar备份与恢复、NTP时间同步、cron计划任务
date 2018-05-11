@@ -1,0 +1,84 @@
+             			  管理用户和组             
+     用户：1.可以登陆操作系统2。可以实现访问控制（不同的用户具备不同的权限）
+        组  ：  方便对用户的管理（将用户加入组）
+        唯一表示：UID 用户编号  ,GID 组编号 
+  管理员用户root：UID =0
+  普通用户UID ： 从1000开始    
+组：基本组(私有组） 附加组（从属组 公共组），一个用户至少属于一个组
+    useradd 添加用户   id （查看用户信息）      
+           “/etc/passwd   #用户信息存放文件”
+		       [root:x:0:0:root:/root:/bin/bash]
+用户名：秘密占位符：UID：基本GID：用户描述信息：家目录：解释器程序（shell）
+ 									                                          	sbin/nologin:禁止用户登陆操作系统
+   [useradd [选项] 用户名    ]添加用户                                   
+      （-u  1250） 指定用户UID  （-d  /mnt/asd）指定用户家目录   (-s sbin/nologin)指定解释器  
+      （-G save） 指定附加组  (-g 指定基本组)
+   [groupadd    组名   ]    添加组  
+          “/etc/group  系统组信息存放文件”
+       [stugrp   : X : 1002 :]
+      { 组名：组的密码占位符：本组的GID编号:组成员列表}
+
+     [gpasswd -a 添加用户  （-d 删除用户）] 
+     [gpasswd -a asd stugrp]     # 把用户asd添加进stugrp组    
+                usermod  修改用户属性
+     [usermod -u 1050 asd -s /sbin/nologin -d /opt/asd -G root  asd]
+    
+      userdel  删除用户
+          [userdel [-r] 用户名]   -r连同用户家目录一并删除  
+    管道操作： | 
+           作用：将前面命令的输出结果，交给后面的命令再次处理，最后输出最后命令的结果。可以跟多个命令
+ 显示/etc/passwd的8～12行
+    [head -12 /etc/passwd | tail -5 ### cat -n /etc/passwd |head -12 | tail -5]
+       Passwd  设置密码
+交互式设置密码
+     [passwd[选项] 用户名] 更改用户秘密 （管理员）    用户直接 passwd
+非交互式设置秘密
+      [echo 123 | passwd --stdin asd]
+
+       “/etc/shadow  用户密码信息存放文件” 
+      [head -1 /etc/shadow ] 
+           root:$6$UiGI4Tc2$htsXYn5cJnvBn27Wjvoel8EJgtdsMjyquqvKAmf1:16261:0:99999:7:::
+       {用户名：秘密加密：上一次更改密码时间：最少使用多少时间才能改密码：秘密最长使用期：提前7天提醒：}
+  	
+                 		     tar备份与恢复   
+             压缩：按某种算法减少文件所占用空间的大小
+  	   	linux独有的压缩工具： gzip , bzip2 , xz (只能压缩文件）
+  	    	  gzip /opt/passwd  --->*.gz
+  	 	       xz /opt/group    --->*.xz
+  	    	bzip2 /opt/shadow  --->*.bz2
+             归档：将许多零散的文件整理为一个文件，文件的大小基本不变。
+ tar集成备份工具 
+     -c:创建归档  -P：保持归档内文件的绝对路径  -t：显示归档中的文件清单 -f：指定归档文件名称 -x：释放归档
+         -z,-j,-J  调用 gzip bzip2 xz 
+ 	        tar        选项         tar包名字        被归档的文件 
+  查看压缩包    [ tar      -tf        ss01.tar                  ]
+ 	  归档       [tar      -zcPf       ss01.tar       /home/ /mnt/]      
+ 	  释放       [tar     -xf       /root/ss01.tar    -C         /opt/ ]  
+
+
+
+                            NTP时间同步        
+   查看日期和时间：date +%F 显示年月日[+%Y 年， +%m 月 ，+%d 日 ， +%H 小时  +%M 分钟]    
+        修改时间  ：date -s "0-0-0 0:0:0"
+     服务端                     ：      服务端软件，
+     classroom.example.com   :    Apache  Nginx  tomcat
+1.安装客户端同步时间的软件chrony
+     客户端                      ：   客户端软件
+     虚拟机server               :    chrony
+2.修改配置文件指定服务端位置
+          "vim /etc/chrony.conf"
+3.重起服务:  [systemctl restart chronyd.server]    #重起服务                 deamon:守护进程
+                        enable                    #随即自启动
+4验证：date
+    
+             		cron计划任务
+     用途 ：按照设置的时间间隔为用户反复执行某一项固定的系统任务
+    软件包  ：cronie     crontabs
+    系统服务：crond
+    日志文件：/var/log/cron
+如何编写crontab任务记录
+    分    时    日    月  周    任务命令行（绝对路径）
+    *    *    *   *   *       poweroff   ，：分割多个不连续的时间点     -：指定连续时间范围
+   30   23    *   *   *       poweroof   *:匹配范围内任意时间    /n：指定时间频率，每......
+使用crontab命令
+-编辑：crontab - e
